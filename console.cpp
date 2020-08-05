@@ -12,7 +12,7 @@ namespace FlyConsole
 
     Console::Console()
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         system("chcp 65001");
         system("cls");
@@ -31,7 +31,7 @@ namespace FlyConsole
 
     Console::~Console()
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         ::CloseHandle(this->buffer1);
         ::CloseHandle(this->buffer2);
@@ -72,7 +72,7 @@ namespace FlyConsole
     {
         this->updata();
 
-        #if _WIN32
+        #ifndef NCURSES
 
         x = this->info->dwCursorPosition.X;
         y = this->info->dwCursorPosition.Y;
@@ -87,7 +87,7 @@ namespace FlyConsole
 
     void Console::set_size(int16_t w,int16_t h)
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         ::COORD size = {w,h};
         ::SetConsoleScreenBufferSize(this->buffer1,size);
@@ -100,7 +100,7 @@ namespace FlyConsole
 
     void Console::set_cursor_position(int16_t x,int16_t y)
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         ::COORD position = {x,y};
         ::SetConsoleCursorPosition(this->backstage_buffer,position);
@@ -112,7 +112,7 @@ namespace FlyConsole
 
     void Console::move_cursor(int16_t x,int16_t y)
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         ::COORD position = {x,y};
         ::SetConsoleCursorPosition(this->backstage_buffer,position);
@@ -124,7 +124,7 @@ namespace FlyConsole
 
     void Console::clear()
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         char text[this->width];
         char *clear_text = (char*)memset(text,' ',this->width * sizeof(char));
@@ -148,7 +148,7 @@ namespace FlyConsole
 
     void Console::refresh()
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         // 后台是buffer1
         if (this->backstage_buffer == this->buffer1)
@@ -176,7 +176,7 @@ namespace FlyConsole
 
     int Console::getch()
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         return _getch();
 
@@ -188,7 +188,7 @@ namespace FlyConsole
 
     int Console::set_text_attribute(PrintColor color)
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         return ::SetConsoleTextAttribute(this->backstage_buffer,color);
 
@@ -202,7 +202,7 @@ namespace FlyConsole
 
     void Console::print(const char *text)
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         ::WriteConsoleA(this->backstage_buffer,text,strlen(text) * sizeof(char),NULL,NULL);
 
@@ -216,7 +216,7 @@ namespace FlyConsole
 
     void Console::print(int16_t x,int16_t y,const char *text)
     {
-        #if _WIN32
+        #ifndef NCURSES
 
         this->move_cursor(x,y);
         ::WriteConsoleA(this->backstage_buffer,text,strlen(text) * sizeof(char),NULL,NULL);

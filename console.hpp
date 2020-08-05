@@ -8,12 +8,12 @@
 
 #include <stdint.h>
 
-#ifdef _WIN32
+#ifdef WIN32
 
 #include <Windows.h>
 #include <conio.h>
 
-#endif // _WIN32
+#endif // WIN32
 
 
 /******************************************************************************************************************
@@ -73,16 +73,26 @@
  *****************************************************************************************************************************/
 
 
+/**
+ * Windows: WIN32  _WIN32
+ * Linux: __linux__
+ * 
+ * 控制台程序: _CONSOLE
+*/
 
 
 namespace FlyConsole
 {
 
+    #ifndef WIN32
+    #define NCURSES
+    #endif
+
 
     typedef enum __print_color__ : uint16_t
     {
 
-        #if _WIN32
+        #ifndef NCURSES
 
         FORE_BLACK = 0,
         FORE_RED = 0x0004,                                  // FOREGROUND_RED
@@ -122,7 +132,7 @@ namespace FlyConsole
         BACK_CYAN = 6,
         BACK_WHITE = 7,
 
-        #endif // _WIN32
+        #endif // WIN32
         
     }PrintColor;
 
@@ -137,7 +147,7 @@ namespace FlyConsole
         uint32_t width;
         uint32_t height;
 
-        #if _WIN32
+        #ifndef NCURSES
 
         HANDLE backstage_buffer;            // 要修改的（后台）
         HANDLE buffer1;
@@ -153,7 +163,7 @@ namespace FlyConsole
     private:
         void updata()
         {
-            #if _WIN32
+            #ifndef NCURSES
 
             GetConsoleScreenBufferInfo(this->backstage_buffer,this->info);
             this->width = this->info->dwSize.X;

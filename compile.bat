@@ -1,4 +1,5 @@
 
-g++ *.cpp
+g++ *.cpp -L./lib/ -lncurses
 
 pause
+
