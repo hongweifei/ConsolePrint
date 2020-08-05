@@ -26,8 +26,19 @@ namespace FlyConsole
             #endif // WIN32
 
         #else
+        
 
-        this->window = initscr();
+        this->window = ::initscr();
+        ::keypad(this->window, TRUE);
+        ::noecho();
+        ::cbreak();                         //传回 'a' 'b' 之类的值
+
+        ::start_color();
+
+        #ifndef WIN32
+        this->color_init();
+        #endif // WIN32
+        
 
         #endif // NCURSES
 
@@ -49,10 +60,53 @@ namespace FlyConsole
 
         #else
 
-
+        ::endwin();
 
         #endif // NCURSES
 
+    }
+
+
+    void Console::color_init()
+    {
+        #ifdef NCURSES
+
+        for (short i = 0; i < 8; i++)
+        {
+            this->color_count++;
+            this->color.insert(::std::map<short,short>::value_type(i|BACKGROUND_BLACK,this->color_count));
+            ::init_pair(this->color_count,get_ncurses_color(i),COLOR_BLACK);
+
+            this->color_count++;
+            this->color.insert(::std::map<short,short>::value_type(i|BACKGROUND_red,this->color_count));
+            ::init_pair(this->color_count,get_ncurses_color(i),COLOR_RED);
+
+            this->color_count++;
+            this->color.insert(::std::map<short,short>::value_type(i|BACKGROUND_green,this->color_count));
+            ::init_pair(this->color_count,get_ncurses_color(i),COLOR_GREEN);
+
+            this->color_count++;
+            this->color.insert(::std::map<short,short>::value_type(i|BACKGROUND_YELLOW,this->color_count));
+            ::init_pair(this->color_count,get_ncurses_color(i),COLOR_YELLOW);
+
+            this->color_count++;
+            this->color.insert(::std::map<short,short>::value_type(i|BACKGROUND_blue,this->color_count));
+            ::init_pair(this->color_count,get_ncurses_color(i),COLOR_BLUE);
+
+            this->color_count++;
+            this->color.insert(::std::map<short,short>::value_type(i|BACKGROUND_MAGENTA,this->color_count));
+            ::init_pair(this->color_count,get_ncurses_color(i),COLOR_MAGENTA);
+
+            this->color_count++;
+            this->color.insert(::std::map<short,short>::value_type(i|BACKGROUND_CYAN,this->color_count));
+            ::init_pair(this->color_count,get_ncurses_color(i),COLOR_CYAN);
+
+            this->color_count++;
+            this->color.insert(::std::map<short,short>::value_type(i|BACKGROUND_WHITE,this->color_count));
+            ::init_pair(this->color_count,get_ncurses_color(i),COLOR_WHITE);
+        }
+
+        #endif // NCURSES
     }
 
 
@@ -93,6 +147,7 @@ namespace FlyConsole
 
         #else
 
+        getyx(this->window,y,x);
 
         #endif // NCURSES
     }
@@ -129,6 +184,8 @@ namespace FlyConsole
 
         #else
 
+        ::wmove(this->window, y, x);
+
         #endif // NCURSES
     }
 
@@ -144,6 +201,8 @@ namespace FlyConsole
             #endif // WIN32
 
         #else
+
+        ::wmove(this->window, y, x);
 
         #endif // NCURSES
     }
@@ -170,6 +229,8 @@ namespace FlyConsole
             #endif // WIN32
 
         #else
+
+        
 
         #endif // NCURSES
 
@@ -200,42 +261,80 @@ namespace FlyConsole
 
         #else
 
+        ::wrefresh(this->window);
+
         #endif // NCURSES
         
         this->updata();
     }
 
 
-
-    int Console::getch()
+    void Console::echo(bool b)
     {
-        #ifndef NCURSES
+        #ifdef NCURSES
 
-            #if WIN32
-
-            return _getch();
-
-            #endif // WIN32
-
-        #else
+        if (b)
+            ::echo();
+        else
+            ::noecho();
 
         #endif // NCURSES
     }
-    
 
-    int Console::set_text_attribute(PrintColor color)
+
+    void Console::set_getch_way(enum __getch_way__ way)
+    {
+        #ifdef NCURSES
+
+        switch (way)
+        {
+        case RAW:
+            ::raw();            //传回的是 KEY_F(n) KEY_DOWN 之类;不会产生阻塞
+            break;
+        case CBREAK:
+            ::cbreak();         //传回 'a' 'b' 之类的值
+            break;
+        
+        default:
+            ::cbreak();         //传回 'a' 'b' 之类的值
+            break;
+        }
+
+        #endif // NCURSES
+    }
+
+
+    int Console::get_ch()
     {
         #ifndef NCURSES
 
             #if WIN32
 
-            return ::SetConsoleTextAttribute(this->backstage_buffer,color);
+            return ::_getch();
 
             #endif // WIN32
 
         #else
 
+        return ::getch();
 
+        #endif // NCURSES
+    }
+
+
+    void Console::set_text_color(short color)
+    {
+        #ifndef NCURSES
+
+            #if WIN32
+
+            ::SetConsoleTextAttribute(this->backstage_buffer,color);
+
+            #endif // WIN32
+
+        #else
+
+        ::attron(COLOR_PAIR(this->color[color]));
 
         #endif // NCURSES
     }
@@ -253,7 +352,7 @@ namespace FlyConsole
 
         #else
 
-
+        wprintw(this->window, text);
 
         #endif // NCURSES
     }
@@ -272,7 +371,7 @@ namespace FlyConsole
 
         #else
 
-
+        mvwprintw(this->window, y, x, text);
 
         #endif // NCURSES
     }

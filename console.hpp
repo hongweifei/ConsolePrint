@@ -7,16 +7,24 @@
 #define __CONSOLE_HEAD__
 
 #include <stdint.h>
+#include <map>
 
 #ifdef WIN32
+    #include <Windows.h>
 
-#include <Windows.h>
-#include <conio.h>
+    #ifdef NCURSES
+    #include "include/ncursesw/ncurses.h"
+    #else
+    #include <conio.h>
+    #endif // NCURSES
+#else
+
+#include <ncurses.h>
 
 #endif // WIN32
 
 
-#include "include/ncursesw/ncurses.h"
+
 
 
 /******************************************************************************************************************
@@ -91,60 +99,6 @@ namespace FlyConsole
     #define NCURSES
     #endif // WIN32
 
-
-    typedef enum __print_color__ : uint16_t
-    {
-
-        #ifndef NCURSES
-
-            #if WIN32
-
-            FORE_BLACK = 0,
-            FORE_RED = 0x0004,                                  // FOREGROUND_RED
-            FORE_GREEN = 0x0002,                                // FOREGROUND_GREEN
-            FORE_YELLOW = FORE_RED | FORE_GREEN,
-            FORE_BLUE = 0x0001,                                 // FOREGROUND_BLUE
-            FORE_MAGENTA = FORE_RED | FORE_BLUE,
-            FORE_CYAN = FORE_GREEN | FORE_BLUE,
-            FORE_WHITE = FORE_RED | FORE_GREEN | FORE_BLUE,
-
-            BACK_BLACK = 0,
-            BACK_RED = 0x0040,                                  // BACKGROUND_RED
-            BACK_GREEN = 0x0020,                                // BACKGROUND_GREEN
-            BACK_YELLOW = BACK_RED | BACK_GREEN,
-            BACK_BLUE = 0x0010,                                 // BACKGROUND_BLUE
-            BACK_MAGENTA = BACK_RED | BACK_BLUE,
-            BACK_CYAN = BACK_GREEN | BACK_BLUE,
-            BACK_WHITE = BACK_RED | BACK_GREEN | BACK_BLUE,
-
-            #endif // WIN32
-
-        #else // NCURSES
-
-        FORE_BLACK = 0,
-        FORE_RED = 1,
-        FORE_GREEN = 2,
-        FORE_YELLOW = 3,
-        FORE_BLUE = 4,
-        FORE_MAGENTA = 5,
-        FORE_CYAN = 6,
-        FORE_WHITE = 7,
-
-        BACK_BLACK = 0,
-        BACK_RED = 1,
-        BACK_GREEN = 2,
-        BACK_YELLOW = 3,
-        BACK_BLUE = 4,
-        BACK_MAGENTA = 5,
-        BACK_CYAN = 6,
-        BACK_WHITE = 7,
-
-        #endif // WIN32
-        
-    }PrintColor;
-
-
-
     
 
     class Console
@@ -168,7 +122,9 @@ namespace FlyConsole
 
         #else
 
-        WINDOW *window;
+        ::WINDOW *window;
+        ::std::map<short,short> color;
+        ::uint16_t color_count = 8;
 
         #endif // NCURSES
         
@@ -188,13 +144,84 @@ namespace FlyConsole
 
             #else
 
+            getmaxyx(this->window, this->height, this->width);
+
             #endif // NCURSES
         }
 
 
     public:
+
+        typedef enum __print_color__ : int16_t
+        {
+
+            FOREGROUND_BLACK = 0,                                                       // 0
+            FOREGROUND_red = 0x0004,                                                    // 4
+            FOREGROUND_green = 0x0002,                                                  // 2
+            FOREGROUND_YELLOW = FOREGROUND_red | FOREGROUND_green,                      // 6
+            FOREGROUND_blue = 0x0001,                                                   // 1
+            FOREGROUND_MAGENTA = FOREGROUND_red | FOREGROUND_blue,                      // 5
+            FOREGROUND_CYAN = FOREGROUND_green | FOREGROUND_blue,                       // 3
+            FOREGROUND_WHITE = FOREGROUND_red | FOREGROUND_green | FOREGROUND_blue,     // 7
+
+            BACKGROUND_BLACK = 0,                                                       // 0
+            BACKGROUND_red = 0x0040,                                                    // 64
+            BACKGROUND_green = 0x0020,                                                  // 32
+            BACKGROUND_YELLOW = BACKGROUND_red | BACKGROUND_green,                      // 96
+            BACKGROUND_blue = 0x0010,                                                   // 16
+            BACKGROUND_MAGENTA = BACKGROUND_red | BACKGROUND_blue,                      // 80
+            BACKGROUND_CYAN = BACKGROUND_green | BACKGROUND_blue,                       // 48
+            BACKGROUND_WHITE = BACKGROUND_red | BACKGROUND_green | BACKGROUND_blue,     // 112
+            
+        } PrintColor;
+
+
+        typedef enum __getch_way__ : uint8_t
+        {
+            RAW,
+            CBREAK
+        } GetchWay;
+
+    
+    private:
+        short get_ncurses_color(short color)
+        {
+            #ifdef NCURSES
+
+            switch (color)
+            {
+            case FOREGROUND_BLACK:
+                return COLOR_BLACK;
+            case FOREGROUND_red:
+                return COLOR_RED;
+            case FOREGROUND_green:
+                return COLOR_GREEN;
+            case FOREGROUND_YELLOW:
+                return COLOR_YELLOW;
+            case FOREGROUND_blue:
+                return COLOR_BLUE;
+            case FOREGROUND_MAGENTA:
+                return COLOR_MAGENTA;
+            case FOREGROUND_CYAN:
+                return COLOR_CYAN;
+            case FOREGROUND_WHITE:
+                return COLOR_WHITE;
+            
+            default:
+                return 0;
+            }
+            
+            #endif // NCURSES
+
+            return 0;
+        }
+
+    public:
         Console();
         ~Console();
+
+
+        void color_init();
         
 
         /**
@@ -274,18 +301,44 @@ namespace FlyConsole
         void refresh();
 
 
+        /**
+         * 修改控制台回显
+         * 
+         * @param b:真则显示，假则不显示
+         * */
+        void echo(bool b);
+
+
+        /**
+         * 修改按键的获取方式
+         * 
+         * */
+        void set_getch_way(enum __getch_way__ way);
+
 
         /**
          * 获取按下的按键
          * 
          * @return 
          * */
-        int getch();
+        int get_ch();
+
 
         /**
-         * 修改输出文本的属性
+         * 添加颜色对
+         * 
+         * @param foreground_color:前景色
+         * @param background_color:背景色
+         * 
+         * @return 返回 颜色对 的编号
          * */
-        int set_text_attribute(PrintColor color);       
+        uint16_t add_color_pair(short foreground_color,short background_color){ return 0; };
+
+
+        /**
+         * 修改输出文本的颜色
+         * */
+        void set_text_color(short color);       
 
 
         void print(const char *text);
