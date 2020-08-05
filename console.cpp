@@ -14,16 +14,22 @@ namespace FlyConsole
     {
         #ifndef NCURSES
 
-        system("chcp 65001");
-        system("cls");
+            #if WIN32
 
-        this->buffer1 = ::GetStdHandle(STD_OUTPUT_HANDLE);
-        this->buffer2 = ::CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,1,NULL);
-        this->backstage_buffer = this->buffer1;
+            system("chcp 65001");
+            system("cls");
+
+            this->buffer1 = ::GetStdHandle(STD_OUTPUT_HANDLE);
+            this->buffer2 = ::CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,1,NULL);
+            this->backstage_buffer = this->buffer1;
+
+            #endif // WIN32
 
         #else
 
-        #endif
+        this->window = initscr();
+
+        #endif // NCURSES
 
         //this->updata();
     }
@@ -33,15 +39,19 @@ namespace FlyConsole
     {
         #ifndef NCURSES
 
-        ::CloseHandle(this->buffer1);
-        ::CloseHandle(this->buffer2);
-        //delete(this->info);
+            #if WIN32
+
+            ::CloseHandle(this->buffer1);
+            ::CloseHandle(this->buffer2);
+            //delete(this->info);
+
+            #endif // WIN32
 
         #else
 
 
 
-        #endif
+        #endif // NCURSES
 
     }
 
@@ -74,13 +84,17 @@ namespace FlyConsole
 
         #ifndef NCURSES
 
-        x = this->info->dwCursorPosition.X;
-        y = this->info->dwCursorPosition.Y;
+            #if WIN32
+
+            x = this->info->dwCursorPosition.X;
+            y = this->info->dwCursorPosition.Y;
+
+            #endif // WIN32
 
         #else
 
 
-        #endif
+        #endif // NCURSES
     }
 
 
@@ -89,59 +103,75 @@ namespace FlyConsole
     {
         #ifndef NCURSES
 
-        ::COORD size = {w,h};
-        ::SetConsoleScreenBufferSize(this->buffer1,size);
-        ::SetConsoleScreenBufferSize(this->buffer2,size);
+            #if WIN32
+
+            ::COORD size = {w,h};
+            ::SetConsoleScreenBufferSize(this->buffer1,size);
+            ::SetConsoleScreenBufferSize(this->buffer2,size);
+
+            #endif // WIN32
 
         #else
 
-        #endif
+        #endif // NCURSES
     }
 
     void Console::set_cursor_position(int16_t x,int16_t y)
     {
         #ifndef NCURSES
 
-        ::COORD position = {x,y};
-        ::SetConsoleCursorPosition(this->backstage_buffer,position);
+            #if WIN32
+
+            ::COORD position = {x,y};
+            ::SetConsoleCursorPosition(this->backstage_buffer,position);
+
+            #endif // WIN32
 
         #else
 
-        #endif
+        #endif // NCURSES
     }
 
     void Console::move_cursor(int16_t x,int16_t y)
     {
         #ifndef NCURSES
 
-        ::COORD position = {x,y};
-        ::SetConsoleCursorPosition(this->backstage_buffer,position);
+            #if WIN32
+
+            ::COORD position = {x,y};
+            ::SetConsoleCursorPosition(this->backstage_buffer,position);
+
+            #endif // WIN32
 
         #else
 
-        #endif
+        #endif // NCURSES
     }
 
     void Console::clear()
     {
         #ifndef NCURSES
 
-        char text[this->width];
-        char *clear_text = (char*)memset(text,' ',this->width * sizeof(char));
+            #if WIN32
 
-        this->move_cursor(0,0);
-        for (size_t i = 0; i < this->height; i++)
-        {
-            ::WriteConsoleA(this->backstage_buffer, clear_text, this->width, NULL, NULL);
-        }
-        this->move_cursor(0,0);
+            char text[this->width];
+            char *clear_text = (char*)memset(text,' ',this->width * sizeof(char));
 
-        /** 释放内存 */
-        delete clear_text;
+            this->move_cursor(0,0);
+            for (size_t i = 0; i < this->height; i++)
+            {
+                ::WriteConsoleA(this->backstage_buffer, clear_text, this->width, NULL, NULL);
+            }
+            this->move_cursor(0,0);
+
+            /** 释放内存 */
+            delete clear_text;
+
+            #endif // WIN32
 
         #else
 
-        #endif
+        #endif // NCURSES
 
         this->updata();
     }
@@ -150,24 +180,27 @@ namespace FlyConsole
     {
         #ifndef NCURSES
 
-        // 后台是buffer1
-        if (this->backstage_buffer == this->buffer1)
-        {
-            ::SetConsoleActiveScreenBuffer(this->buffer1);    // 将buffer1换到前台
-            this->backstage_buffer = this->buffer2;         // 将后台改为buffer2
-        }
+            #if WIN32
 
-        // 后台是buffer2
-        else
-        {
-            ::SetConsoleActiveScreenBuffer(this->buffer2);    // 将buffer2换到前台
-            this->backstage_buffer = this->buffer1;         // 将后台改为buffer1
-        }
-        
+            // 后台是buffer1
+            if (this->backstage_buffer == this->buffer1)
+            {
+                ::SetConsoleActiveScreenBuffer(this->buffer1);    // 将buffer1换到前台
+                this->backstage_buffer = this->buffer2;         // 将后台改为buffer2
+            }
+
+            // 后台是buffer2
+            else
+            {
+                ::SetConsoleActiveScreenBuffer(this->buffer2);    // 将buffer2换到前台
+                this->backstage_buffer = this->buffer1;         // 将后台改为buffer1
+            }
+            
+            #endif // WIN32
 
         #else
 
-        #endif
+        #endif // NCURSES
         
         this->updata();
     }
@@ -178,11 +211,15 @@ namespace FlyConsole
     {
         #ifndef NCURSES
 
-        return _getch();
+            #if WIN32
+
+            return _getch();
+
+            #endif // WIN32
 
         #else
 
-        #endif
+        #endif // NCURSES
     }
     
 
@@ -190,13 +227,17 @@ namespace FlyConsole
     {
         #ifndef NCURSES
 
-        return ::SetConsoleTextAttribute(this->backstage_buffer,color);
+            #if WIN32
+
+            return ::SetConsoleTextAttribute(this->backstage_buffer,color);
+
+            #endif // WIN32
 
         #else
 
 
 
-        #endif
+        #endif // NCURSES
     }
 
 
@@ -204,13 +245,17 @@ namespace FlyConsole
     {
         #ifndef NCURSES
 
-        ::WriteConsoleA(this->backstage_buffer,text,strlen(text) * sizeof(char),NULL,NULL);
+            #if WIN32
+
+            ::WriteConsoleA(this->backstage_buffer,text,strlen(text) * sizeof(char),NULL,NULL);
+
+            #endif // WIN32
 
         #else
 
 
 
-        #endif
+        #endif // NCURSES
     }
 
 
@@ -218,14 +263,18 @@ namespace FlyConsole
     {
         #ifndef NCURSES
 
-        this->move_cursor(x,y);
-        ::WriteConsoleA(this->backstage_buffer,text,strlen(text) * sizeof(char),NULL,NULL);
+            #if WIN32
+
+            this->move_cursor(x,y);
+            ::WriteConsoleA(this->backstage_buffer,text,strlen(text) * sizeof(char),NULL,NULL);
+
+            #endif // WIN32
 
         #else
 
 
 
-        #endif
+        #endif // NCURSES
     }
 
 

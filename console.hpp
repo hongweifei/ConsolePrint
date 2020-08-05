@@ -16,6 +16,9 @@
 #endif // WIN32
 
 
+#include "include/ncursesw/ncurses.h"
+
+
 /******************************************************************************************************************
  *
  * 一些特殊符号
@@ -86,7 +89,7 @@ namespace FlyConsole
 
     #ifndef WIN32
     #define NCURSES
-    #endif
+    #endif // WIN32
 
 
     typedef enum __print_color__ : uint16_t
@@ -94,25 +97,29 @@ namespace FlyConsole
 
         #ifndef NCURSES
 
-        FORE_BLACK = 0,
-        FORE_RED = 0x0004,                                  // FOREGROUND_RED
-        FORE_GREEN = 0x0002,                                // FOREGROUND_GREEN
-        FORE_YELLOW = FORE_RED | FORE_GREEN,
-        FORE_BLUE = 0x0001,                                 // FOREGROUND_BLUE
-        FORE_MAGENTA = FORE_RED | FORE_BLUE,
-        FORE_CYAN = FORE_GREEN | FORE_BLUE,
-        FORE_WHITE = FORE_RED | FORE_GREEN | FORE_BLUE,
+            #if WIN32
 
-        BACK_BLACK = 0,
-        BACK_RED = 0x0040,                                  // BACKGROUND_RED
-        BACK_GREEN = 0x0020,                                // BACKGROUND_GREEN
-        BACK_YELLOW = BACK_RED | BACK_GREEN,
-        BACK_BLUE = 0x0010,                                 // BACKGROUND_BLUE
-        BACK_MAGENTA = BACK_RED | BACK_BLUE,
-        BACK_CYAN = BACK_GREEN | BACK_BLUE,
-        BACK_WHITE = BACK_RED | BACK_GREEN | BACK_BLUE,
+            FORE_BLACK = 0,
+            FORE_RED = 0x0004,                                  // FOREGROUND_RED
+            FORE_GREEN = 0x0002,                                // FOREGROUND_GREEN
+            FORE_YELLOW = FORE_RED | FORE_GREEN,
+            FORE_BLUE = 0x0001,                                 // FOREGROUND_BLUE
+            FORE_MAGENTA = FORE_RED | FORE_BLUE,
+            FORE_CYAN = FORE_GREEN | FORE_BLUE,
+            FORE_WHITE = FORE_RED | FORE_GREEN | FORE_BLUE,
 
-        #else
+            BACK_BLACK = 0,
+            BACK_RED = 0x0040,                                  // BACKGROUND_RED
+            BACK_GREEN = 0x0020,                                // BACKGROUND_GREEN
+            BACK_YELLOW = BACK_RED | BACK_GREEN,
+            BACK_BLUE = 0x0010,                                 // BACKGROUND_BLUE
+            BACK_MAGENTA = BACK_RED | BACK_BLUE,
+            BACK_CYAN = BACK_GREEN | BACK_BLUE,
+            BACK_WHITE = BACK_RED | BACK_GREEN | BACK_BLUE,
+
+            #endif // WIN32
+
+        #else // NCURSES
 
         FORE_BLACK = 0,
         FORE_RED = 1,
@@ -149,15 +156,21 @@ namespace FlyConsole
 
         #ifndef NCURSES
 
-        HANDLE backstage_buffer;            // 要修改的（后台）
-        HANDLE buffer1;
-        HANDLE buffer2;
+            #if WIN32
 
-        CONSOLE_SCREEN_BUFFER_INFO *info;
+            HANDLE backstage_buffer;            // 要修改的（后台）
+            HANDLE buffer1;
+            HANDLE buffer2;
+
+            CONSOLE_SCREEN_BUFFER_INFO *info;
+
+            #endif // Win32
 
         #else
 
-        #endif
+        WINDOW *window;
+
+        #endif // NCURSES
         
 
     private:
@@ -165,13 +178,17 @@ namespace FlyConsole
         {
             #ifndef NCURSES
 
-            GetConsoleScreenBufferInfo(this->backstage_buffer,this->info);
-            this->width = this->info->dwSize.X;
-            this->height = this->info->dwSize.Y;
+                #if WIN32
+
+                GetConsoleScreenBufferInfo(this->backstage_buffer,this->info);
+                this->width = this->info->dwSize.X;
+                this->height = this->info->dwSize.Y;
+
+                #endif // WIN32
 
             #else
 
-            #endif
+            #endif // NCURSES
         }
 
 
